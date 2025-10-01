@@ -23,7 +23,7 @@ def cross(a,b):
     return (A@b)[:,:,:,0]
 
 class PathInference:
-    def __init__(self,obstimes, observations, kernel, likenoisescale, Nind=None, Z=None, IndStartEnd=None):
+    def __init__(self,obstimes, observations, kernel, likenoisescale, Nind=None, Z=None, IndStartEnd=None, memlimit=1e6):
         """
         obstimes : The times of the N observations (a 1d numpy array)
         observations : The observations themselves. For a d-dimensional space, this will consist of
@@ -45,11 +45,13 @@ class PathInference:
         (c) selected automatically, using inducing points evenly spaced between the times in tuple IndStartEnd
         (d) selected manually (by setting Z).
         Nind : number of inducing points (default is 1+int(3*np.max(obstimes))).
+        memlimit : maximum number of values in a numpy array, default = 1 million (which is about 8 to 16Mb of memory).
         """
         self.obstimes = obstimes
         self.observations = observations
         self.likenoisescale = likenoisescale
         self.dims = int(observations.shape[1]/2)
+        self.memlimit = memlimit
 
         self.kernel = kernel
         if Nind is None:
@@ -72,6 +74,9 @@ class PathInference:
 
     def compute_matrices(self,X,Z):
         """TODO: Rename as A and B not A and Z"""
+        if X.shape[0]*Z.shape[0]>self.memlimit:
+            raise Exception("May exceed memory avialable (X x Z is %d x %d)" % (X.shape[0],Z.shape[0]))
+        
         Kzz = self.kernel.K(Z,Z)+np.eye(Z.shape[0],dtype=np.float32)*self.jitter
         Kxx = self.kernel.K(X,X)+np.eye(X.shape[0],dtype=np.float32)*self.jitter
         Kxz = self.kernel.K(X,Z)
