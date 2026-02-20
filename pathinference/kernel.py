@@ -19,7 +19,7 @@ class EQ(Kernel):
         self.scale = scale
         
     def K(self,X1,X2):
-        cov = (self.scale**2)*np.exp(-np.sum(np.subtract(X1[:,None],X2[None,:])**2/(2*self.ls**2),2))
+        cov = (self.scale**2)+(self.scale**2)*np.exp(-np.sum(np.subtract(X1[:,None],X2[None,:])**2/(2*self.ls**2),2))
         axsel = tf.cast((X1[:,1][:,None]==X2[:,1][None,:]),dtype=tf.float32)
         cov = cov * axsel
         return cov
